@@ -15,7 +15,7 @@ module.exports = function (req, res, next) {
     // Decode the token
     const decoded = jwt.verify(token, config.get('jwtSecret'));
 
-    console.log(decoded.user); // { id: '5f30b2553666042b9621bdf5' }
+    // console.log(decoded.user); // { id: '5f30b2553666042b9621bdf5' }
 
     req.user = decoded.user;
 
