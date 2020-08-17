@@ -7,6 +7,7 @@ const { body, validationResult } = require('express-validator');
 
 const Profile = require('../../models/Profile');
 const User = require('../../models/User');
+const Post = require('../../models/Post');
 
 // @route   GET api/profile/me
 // @desc    Get current users profile
@@ -135,24 +136,25 @@ router.get('/user/:user_id', async (req, res) => {
     res.json(profile);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
+    if (err.kind == 'ObjectId') {
       return res.status(400).json({ msg: 'Profile not found' });
     }
     res.status(500).send('Server Error');
   }
 });
 
-// @route   DELETE api/profile
-// @desc    Delete profile, user & posts
-// @access  Private
+// @route    DELETE api/profile
+// @desc     Delete profile, user & posts
+// @access   Private
 router.delete('/', auth, async (req, res) => {
   try {
-    // @todo - remove users posts
-
+    // Remove user posts
+    await Post.deleteMany({ user: req.user.id });
     // Remove profile
     await Profile.findOneAndRemove({ user: req.user.id });
     // Remove user
     await User.findOneAndRemove({ _id: req.user.id });
+
     res.json({ msg: 'User deleted' });
   } catch (err) {
     console.error(err.message);
@@ -189,7 +191,7 @@ router.put(
       description,
     } = req.body;
 
-    const newEsp = {
+    const newExp = {
       title,
       company,
       location,
@@ -203,7 +205,7 @@ router.put(
       const profile = await Profile.findOne({ user: req.user.id });
 
       // Add newEsp at the top of the profile.experience
-      profile.experience.unshift(newEsp);
+      profile.experience.unshift(newExp);
 
       await profile.save();
       res.json(profile);
@@ -226,6 +228,7 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
       .indexOf(req.params.exp_id);
 
     profile.experience.splice(removeIndex, 1);
+    await profile.save();
     res.json(profile);
   } catch (err) {
     console.error(err.message);
